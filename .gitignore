@@ -426,3 +426,10 @@ FodyWeavers.xsd
 
 # Official VS Code C# Dev Kit Extension exclusion
 #*.lscache
+
+# Speech rendered while trying the app out.
+*.wav
+*.ogg
+
+# Session scratch and IDE state
+.claude/

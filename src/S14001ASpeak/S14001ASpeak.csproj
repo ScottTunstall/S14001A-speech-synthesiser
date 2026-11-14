@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net48;net10.0</TargetFrameworks>
+    <RootNamespace>S14001ASpeak</RootNamespace>
+    <AssemblyName>S14001ASpeak</AssemblyName>
+    <Version>1.0.0</Version>
+    <Description>Speaks any text through an emulation of the TSI S14001A speech chip, ported from MAME.</Description>
+    <!-- InvariantGlobalization stays off: System.Speech on .NET matches voices by culture and fails without culture data. -->
+    <!-- The XML documentation file exists for the analyzers; installed copies have no use for it. -->
+    <PublishDocumentationFile>false</PublishDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OggVorbisEncoder" Version="1.2.2" />
+  </ItemGroup>
+
+  <!-- The Windows speech API (SAPI): part of .NET Framework, a NuGet package on .NET. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+    <Reference Include="System.Speech" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' != 'net48'">
+    <PackageReference Include="System.Speech" Version="10.0.0" />
+    <!-- SAPI speech and winmm playback are Windows-only, so the whole app is. -->
+    <AssemblyAttribute Include="System.Runtime.Versioning.SupportedOSPlatformAttribute">
+      <_Parameter1>windows</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="S14001ASpeak.Tests" />
+  </ItemGroup>
+
+</Project>
