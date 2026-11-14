@@ -1,6 +1,6 @@
 ; Inno Setup script for S14001ASpeak.
 ;
-; Inno Setup is used, as in VotraxSpeak and CDGFromYoutube, because it is the simplest way to get a normal
+; Inno Setup is used because it is the simplest way to get a normal
 ; Windows setup.exe: one script, one free compiler (https://jrsoftware.org/isinfo.php), and an
 ; "Installed apps" entry with a working uninstaller for free.
 ;
@@ -11,7 +11,7 @@
 ; This script does not build the program. Run build.ps1, which publishes S14001ASpeak for both
 ; frameworks and then compiles this script once for each; see installer\README.md.
 ;
-; Unlike VotraxSpeak, no ROM is needed: S14001ASpeak encodes its own speech ROM data from the text.
+; No ROM is needed: S14001ASpeak encodes its own speech ROM data from the text.
 
 #define MyAppName "S14001ASpeak"
 #define MyAppExeName "S14001ASpeak.exe"

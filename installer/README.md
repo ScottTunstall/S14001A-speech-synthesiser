@@ -12,7 +12,7 @@ Command Prompt, and registers an entry in "Installed apps" / "Programs and Featu
 removed like any other program. Both use the same app identity, so installing one replaces the other
 instead of installing both into the same folder.
 
-The installers are built with [Inno Setup](https://jrsoftware.org/isinfo.php), the same as VotraxSpeak:
+The installers are built with [Inno Setup](https://jrsoftware.org/isinfo.php):
 one script, one free compiler, and the uninstaller comes for free.
 
 ## Building them
@@ -36,7 +36,7 @@ command with `powershell -ExecutionPolicy Bypass -File installer\build.ps1`.
 
 ## No ROM needed
 
-Unlike VotraxSpeak, there is no ROM page: S14001ASpeak encodes its own S14001A speech ROM data from the
+There is no ROM page: S14001ASpeak encodes its own S14001A speech ROM data from the
 text, using a Windows speech voice. Every Windows 10 and 11 PC already has one.
 
 ## What it does

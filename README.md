@@ -9,8 +9,7 @@ S14001ASpeak "Intruder alert! Intruder alert!"
 
 The chip emulation is a C# port of MAME's
 [`s14001a.cpp`](https://github.com/mamedev/mame/blob/master/src/devices/sound/s14001a.cpp) by Ed Bernard,
-Jonathan Gevaryahu and hap. It builds for both **.NET Framework 4.8** and **.NET 10**. It works like the
-[Votrax SC-01 emulator](https://github.com/ScottTunstall/votrax-sc01-emulator), but needs no ROM file.
+Jonathan Gevaryahu and hap. It builds for both **.NET Framework 4.8** and **.NET 10**, and needs no ROM file.
 
 ---
 
@@ -28,7 +27,7 @@ Jonathan Gevaryahu and hap. It builds for both **.NET Framework 4.8** and **.NET
 
 ## Quick setup
 
-You don't need any programming tools, and unlike the Votrax emulator you don't need a ROM file.
+You don't need any programming tools or a ROM file.
 
 1. **Download the installer.** Go to the
    [latest release](https://github.com/ScottTunstall/S14001A-speech-synthesiser/releases/latest) and click
@@ -69,8 +68,7 @@ S14001ASpeak [options] [@] <text>
 | `-h, --help`           | Show help. |
 | `@` or `--`            | Treat everything after this as text, even if it starts with `-`. |
 
-Options can be given in any order. If an option is given twice, the last value wins. Unlike the Votrax app
-there is no `--gorf` or `--phonemes`: the S14001A has no phonemes, so you just give it text.
+Options can be given in any order. If an option is given twice, the last value wins.
 
 ### Examples
 
@@ -113,7 +111,7 @@ both work.
 
 ## How it can say anything
 
-The S14001A is not a phoneme synthesiser like the Votrax SC-01. It plays back speech stored in its ROM as
+The S14001A is not a phoneme synthesiser. It plays back speech stored in its ROM as
 2-bit delta modulation, one word per START pulse. Berzerk's ROM holds only 29 words. TSI made those ROMs
 by recording a person and compressing the recording into the chip's format.
 
