@@ -7,6 +7,12 @@ namespace S14001ASpeak.RomEncoding;
 /// <summary>
 /// Groups analysed frames into syllables and encodes their delta data.
 /// </summary>
+/// <remarks>
+/// Voiced frames are stored as TSI stored them in its vocabularies (checked against the Berzerk speech ROM):
+/// one pulse per <see cref="EncoderConstants.PeriodsPerPulse"/> pitch periods, made from the ringing after the
+/// pitch pulse's peak, time-reversed. The chip plays a stored quarter forwards and then mirrored, so each period
+/// sounds as a rise to the peak followed by the natural decay, starting and ending at rest.
+/// </remarks>
 internal static class SyllableEncoder
 {
     /// <summary>
@@ -34,29 +40,80 @@ internal static class SyllableEncoder
         }
 #endif
 
-        int first = FirstSound(frames);
         int last = LastSound(frames);
         List<EncodedSyllable> syllables = [];
-        int index = first;
+        int index = FirstSound(frames);
 
         while (index <= last)
         {
             FrameKind kind = frames[index].Kind;
-            int maximum = kind == FrameKind.Voiced ? EncoderConstants.MaximumVoicedFrames : EncoderConstants.MaximumUnvoicedFrames;
-            int count = 1;
+            int runLength = 1;
 
-            while (count < maximum && index + count <= last && frames[index + count].Kind == kind)
+            while (index + runLength <= last && frames[index + runLength].Kind == kind)
             {
-                count++;
+                runLength++;
             }
 
-            byte[] data = [.. frames.Skip(index).Take(count).SelectMany(frame => EncodeFrame(levels, frame))];
-            syllables.Add(new EncodedSyllable(kind, count, data));
-            index += count;
+            List<FrameAnalysis> run = [.. frames.Skip(index).Take(runLength)];
+            syllables.AddRange(kind == FrameKind.Voiced ? EncodeVoiced(levels, run) : EncodeUnvoiced(levels, run, kind));
+            index += runLength;
         }
 
         return syllables;
     }
+
+    private static IEnumerable<EncodedSyllable> EncodeVoiced(IReadOnlyList<double> levels, List<FrameAnalysis> run)
+    {
+        int index = 0;
+
+        while (index < run.Count)
+        {
+            int remaining = run.Count - index;
+
+            // Whole groups of PeriodsPerPulse go in syllables of up to 8 pulses; a shorter tail is one pulse
+            // repeated for the frames that are left.
+            int periods = Math.Min(EncoderConstants.PeriodsPerPulse, remaining);
+            int pulses = Math.Min(EncoderConstants.MaximumVoicedPulses, remaining / periods);
+            int frameCount = pulses * periods;
+
+            byte[] data = [.. Enumerable.Range(0, pulses)
+                .SelectMany(pulse => EncodePulse(levels, run.Skip(index + (pulse * periods)).Take(periods)))];
+
+            yield return new EncodedSyllable(FrameKind.Voiced, frameCount, periods, data);
+            index += frameCount;
+        }
+    }
+
+    private static IEnumerable<EncodedSyllable> EncodeUnvoiced(IReadOnlyList<double> levels, List<FrameAnalysis> run, FrameKind kind)
+    {
+        for (int index = 0; index < run.Count; index += EncoderConstants.MaximumUnvoicedFrames)
+        {
+            List<FrameAnalysis> part = [.. run.Skip(index).Take(EncoderConstants.MaximumUnvoicedFrames)];
+            byte[] data = kind == FrameKind.Silent ? [] : [.. part.SelectMany(frame => EncodeUnvoicedFrame(levels, frame))];
+
+            yield return new EncodedSyllable(kind, part.Count, 1, data);
+        }
+    }
+
+    private static byte[] EncodePulse(IReadOnlyList<double> levels, IEnumerable<FrameAnalysis> frames)
+    {
+        List<int> peaks = [.. frames.Select(frame => frame.SegmentStart)];
+        const int Length = EncoderConstants.DeltasPerQuarter;
+
+        // The average of the frames' ringing, from the peak on, time-reversed so the mirror plays it forwards.
+        double[] target = [.. Enumerable.Range(0, Length)
+            .Select(index => peaks.Average(peak => LevelAt(levels, peak + Length - 1 - index)))];
+
+        return Pack(DeltaEncoder.Encode(target, voiced: true));
+    }
+
+    private static byte[] EncodeUnvoicedFrame(IReadOnlyList<double> levels, FrameAnalysis frame)
+    {
+        double[] target = [.. Enumerable.Range(frame.SegmentStart, EncoderConstants.DeltasPerFrame).Select(index => LevelAt(levels, index))];
+        return Pack(DeltaEncoder.Encode(target, voiced: false));
+    }
+
+    private static double LevelAt(IReadOnlyList<double> levels, int index) => index < levels.Count ? levels[index] : 0;
 
     private static int FirstSound(IReadOnlyList<FrameAnalysis> frames)
     {
@@ -80,24 +137,6 @@ internal static class SyllableEncoder
         }
 
         return index;
-    }
-
-    private static byte[] EncodeFrame(IReadOnlyList<double> levels, FrameAnalysis frame)
-    {
-        int length = frame.Kind switch
-        {
-            FrameKind.Voiced => EncoderConstants.DeltasPerQuarter,
-            FrameKind.Unvoiced => EncoderConstants.DeltasPerFrame,
-            _ => 0,
-        };
-
-        if (length == 0)
-        {
-            return [];
-        }
-
-        double[] target = [.. Enumerable.Range(frame.SegmentStart, length).Select(index => index < levels.Count ? levels[index] : 0)];
-        return Pack(DeltaEncoder.Encode(target, frame.Kind == FrameKind.Voiced));
     }
 
     private static byte[] Pack(IReadOnlyList<int> deltas)

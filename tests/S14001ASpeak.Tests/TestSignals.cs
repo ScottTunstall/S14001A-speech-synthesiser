@@ -34,6 +34,28 @@ internal static class TestSignals
         [.. Enumerable.Range(0, count).Select(index => amplitude * ((HashToUnit(index + NoiseSeed) * 2) - 1))];
 
     /// <summary>
+    /// Returns a voice-like pulse train: at each pitch period a sharp pulse that rings down, like a vowel's
+    /// formant excited by the glottis. Unlike a sine wave it is lopsided, so it has a polarity.
+    /// </summary>
+    /// <param name="pitchHz">The pitch.</param>
+    /// <param name="amplitude">The peak value.</param>
+    /// <param name="count">The number of samples.</param>
+    /// <param name="rateHz">The sample rate.</param>
+    /// <returns>The samples.</returns>
+    public static double[] PulseTrain(double pitchHz, double amplitude, int count, double rateHz = EncoderConstants.DeltaRateHz)
+    {
+        const double RingingHz = 700;
+        const double DecaySeconds = 0.002;
+        double period = rateHz / pitchHz;
+
+        return [.. Enumerable.Range(0, count).Select(index =>
+        {
+            double seconds = index % period / rateHz;
+            return amplitude * Math.Exp(-seconds / DecaySeconds) * Math.Cos(2 * Math.PI * RingingHz * seconds);
+        })];
+    }
+
+    /// <summary>
     /// Returns silence.
     /// </summary>
     /// <param name="count">The number of samples.</param>

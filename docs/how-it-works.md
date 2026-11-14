@@ -39,19 +39,27 @@ new data.
 
 ## The encoder
 
-`SpeechEncoder` mirrors how TSI produced its ROMs from recordings:
+`SpeechEncoder` mirrors how TSI produced its ROMs from recordings. The voiced encoding follows what the
+Berzerk speech ROM's own data shows:
 
 1. **Resample** (`AudioResampler`) the voice to the chip's delta rate: half the default chip clock, about
-   12 kHz, with a windowed-sinc low-pass filter against aliasing. Scale it so the loud parts use the chip's
-   output range.
+   12 kHz, with a windowed-sinc low-pass filter against aliasing. Turn it so its pitch pulses point upwards
+   (by the sign of its skew), and scale it so its peaks reach about 5.5 levels above rest. That is where
+   TSI's pulses peak; scaling closer to full scale makes the chip clip.
 2. **Analyse** (`FrameAnalyzer`) each 128-delta frame. Quiet frames are silent. Frames with a high
    zero-crossing rate, or with no clear period between 70 and 400 Hz, are unvoiced. The rest are voiced, and
-   for those it finds the zero crossing before the loudest sample of the first pitch period: the pitch
-   pulse the chip will repeat.
-3. **Encode** (`SyllableEncoder`, `DeltaEncoder`) runs of frames as syllables: up to 8 voiced frames
-   (repeat 3, so each stored pulse plays once) or up to 32 unvoiced or silent frames. The deltas come from a
-   Viterbi search over the decoder's 64 states (output level × previous delta). The search uses the
-   emulator's own `DeltaModulator`, so the chip plays back exactly what the search measured.
+   for those it finds the peak of the first pitch period: the pitch pulse.
+3. **Encode** (`SyllableEncoder`, `DeltaEncoder`) runs of frames as syllables:
+   - **Voiced:** one stored pulse per 3 pitch periods (repeat field 1, as in most of TSI's Berzerk
+     syllables), up to 8 pulses per syllable. Each pulse is the average of the 32 samples after the pitch
+     pulse's peak in those 3 periods, **time-reversed**. The chip plays a stored quarter forwards and then
+     mirrored, so each period sounds as a rise to the peak, then the natural decay, starting and ending at
+     rest. Repeating and averaging keep the buzz steady. A new, unaveraged pulse every period varies from
+     period to period, which sounds like background noise.
+   - **Unvoiced and silent:** up to 32 frames per syllable; unvoiced frames store every delta.
+
+   The deltas come from a Viterbi search over the decoder's 64 states (output level × previous delta). The
+   search uses the emulator's own `DeltaModulator`, so the chip plays back exactly what the search measured.
 4. **Pack** (`RomBankPacker`) the syllables into 4 KB banks laid out as the chip reads them: the word table
    entry, the syllable list, then each syllable's data on a 16-byte boundary. Long speech fills several
    banks; the renderer switches banks between words, as TSI boards with external ROM banking did.
@@ -60,7 +68,11 @@ new data.
 
 - The chip port was compared with an independent C# port of the same MAME code (the BerzerkSound project),
   playing Berzerk's real speech ROMs. The output matched sample for sample.
-- As an intelligibility check, the speech was run back through Windows speech recognition. For eight
-  Berzerk phrases, TSI's own ROM recordings were recognised 0 times out of 8, and this encoder's 2 times
-  out of 8. The chip's format is hard for modern recognisers, but the encoder holds its own against the
+- The voiced encoding was compared with TSI's, on "intruder alert": TSI's ROM and the encoder both give a
+  correlation of 0.87 and 0.86 from one pitch period to the next, with 0.2% and 0.5% of the output at the
+  clipping rails. Version 1.0 stored a new pulse every period and scored 0.51 and 3.9%, which sounded like
+  background noise.
+- As an intelligibility check, the speech was run back through Windows speech recognition, picking from
+  eight Berzerk phrases. TSI's own ROM recordings were recognised 0 times out of 8, and this encoder's 1 or 2
+  times. The chip's format is hard for modern recognisers, but the encoder holds its own against the
   original.

@@ -50,14 +50,15 @@ public sealed class FrameAnalyzerTests
     }
 
     [Fact]
-    public void StartsAVoicedSegmentAtAZeroCrossingBeforeThePitchPulse()
+    public void MarksAVoicedFrameAtThePositivePeakOfItsFirstPitchPeriod()
     {
         double[] levels = TestSignals.Sine(150, 5, 8 * Frame);
 
         FrameAnalysis frame = FrameAnalyzer.Analyze(levels)[2];
 
+        // 150 Hz at the 12 kHz delta rate is a period of about 80 samples.
         Assert.Equal(FrameKind.Voiced, frame.Kind);
-        Assert.InRange(frame.SegmentStart, (2 * Frame) - EncoderConstants.DeltasPerQuarter, 3 * Frame);
-        Assert.True(levels[frame.SegmentStart - 1] * levels[frame.SegmentStart] <= 0 || frame.SegmentStart == 0);
+        Assert.InRange(frame.SegmentStart, 2 * Frame, (2 * Frame) + 81);
+        Assert.Equal(5, levels[frame.SegmentStart], 1);
     }
 }

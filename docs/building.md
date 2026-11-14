@@ -11,7 +11,7 @@ all Windows-only). Building the installers needs [Inno Setup 6](https://jrsoftwa
 
 ```console
 dotnet build              :: both target frameworks
-dotnet test               :: 156 tests on each framework
+dotnet test               :: 172 tests on each framework
 installer\build.ps1       :: S14001ASpeakSetup-net48.exe and S14001ASpeakSetup-net10.exe
 ```
 

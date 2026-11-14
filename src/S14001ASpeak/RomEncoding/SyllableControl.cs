@@ -10,33 +10,63 @@ namespace S14001ASpeak.RomEncoding;
 internal static class SyllableControl
 {
     /// <summary>
-    /// Returns the control byte that plays <paramref name="frameCount"/> frames of <paramref name="kind"/>.
+    /// Returns the control byte that plays <paramref name="syllable"/>.
     /// </summary>
-    /// <param name="kind">How the frames are stored.</param>
-    /// <param name="frameCount">The number of frames.</param>
+    /// <param name="syllable">The syllable.</param>
     /// <param name="isLast">Whether this is the word's last syllable.</param>
     /// <returns>The control byte.</returns>
-    /// <exception cref="ArgumentOutOfRangeException"><paramref name="frameCount"/> is more than one syllable can play.</exception>
-    public static byte For(FrameKind kind, int frameCount, bool isLast)
+    /// <exception cref="ArgumentNullException"><paramref name="syllable"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">The syllable plays more, or a different shape of, frames than one can.</exception>
+    public static byte For(EncodedSyllable syllable, bool isLast)
     {
-        int maximum = kind == FrameKind.Voiced ? EncoderConstants.MaximumVoicedFrames : EncoderConstants.MaximumUnvoicedFrames;
-
-        if (frameCount < 1 || frameCount > maximum)
+#if NET
+        ArgumentNullException.ThrowIfNull(syllable);
+#else
+        if (syllable is null)
         {
-            throw new ArgumentOutOfRangeException(nameof(frameCount), frameCount, "A syllable cannot play that many frames.");
+            throw new ArgumentNullException(nameof(syllable));
         }
+#endif
 
-        // Voiced: with repeat 3 each length step plays one pitch period, from the length field up to 7.
-        // Unvoiced and silent: the length counter counts quarters from (length, repeat, 0) up to 7Fh, so the
-        // 5-bit length and repeat field is 32 minus the frame count.
-        int control = kind == FrameKind.Voiced
-            ? ((EncoderConstants.VoicedLengthSteps - frameCount) << EncoderConstants.RepeatBits) | EncoderConstants.VoicedRepeat
-            : EncoderConstants.MaximumUnvoicedFrames - frameCount;
-
+        int control = syllable.Kind == FrameKind.Voiced ? VoicedLengthAndRepeat(syllable) : UnvoicedLengthAndRepeat(syllable);
         control |= isLast ? ChipConstants.StopBit : 0;
-        control |= kind == FrameKind.Voiced ? ChipConstants.VoicedBit : 0;
-        control |= kind == FrameKind.Silent ? ChipConstants.SilenceBit : 0;
+        control |= syllable.Kind == FrameKind.Voiced ? ChipConstants.VoicedBit : 0;
+        control |= syllable.Kind == FrameKind.Silent ? ChipConstants.SilenceBit : 0;
 
         return (byte)control;
+    }
+
+    private static int VoicedLengthAndRepeat(EncodedSyllable syllable)
+    {
+        int periods = syllable.PeriodsPerPulse;
+
+        if (periods is < 1 or > EncoderConstants.MaximumPeriodsPerPulse || syllable.FrameCount % periods != 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(syllable), syllable, "A voiced syllable plays whole pulses of 1 to 4 periods.");
+        }
+
+        int pulses = syllable.FrameCount / periods;
+
+        if (pulses is < 1 or > EncoderConstants.MaximumVoicedPulses)
+        {
+            throw new ArgumentOutOfRangeException(nameof(syllable), syllable, "A voiced syllable stores 1 to 8 pulses.");
+        }
+
+        // Each length step plays one stored pulse, repeated until the 2-bit repeat counter, loaded with
+        // 4 - periods, reaches 3; the length field counts the pulses up to 7.
+        return ((EncoderConstants.LengthSteps - pulses) << EncoderConstants.RepeatBits)
+            | (EncoderConstants.MaximumPeriodsPerPulse - periods);
+    }
+
+    private static int UnvoicedLengthAndRepeat(EncodedSyllable syllable)
+    {
+        if (syllable.FrameCount is < 1 or > EncoderConstants.MaximumUnvoicedFrames)
+        {
+            throw new ArgumentOutOfRangeException(nameof(syllable), syllable, "An unvoiced syllable plays 1 to 32 frames.");
+        }
+
+        // The length counter counts quarters from (length, repeat, 0) up to 7Fh, so the 5-bit length and
+        // repeat field is 32 minus the frame count.
+        return EncoderConstants.MaximumUnvoicedFrames - syllable.FrameCount;
     }
 }

@@ -69,6 +69,31 @@ public sealed class RomBankPackerTests
         Assert.Equal((frames - 1) * ClocksPerFrame, many - oneFrame);
     }
 
+    [Theory]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    public void PlaysEachStoredPulseForItsPeriods(int periodsPerPulse)
+    {
+        int onePulse = ChipRun.Say(RomBankPacker.Pack([Syllable(FrameKind.Voiced, periodsPerPulse, periodsPerPulse)])[0], 0).BusyClocks;
+        int eightPulses = ChipRun.Say(RomBankPacker.Pack([Syllable(FrameKind.Voiced, 8 * periodsPerPulse, periodsPerPulse)])[0], 0).BusyClocks;
+
+        Assert.Equal(7 * periodsPerPulse * ClocksPerFrame, eightPulses - onePulse);
+    }
+
+    [Fact]
+    public void RepeatsTheSameStoredPulse()
+    {
+        var run = ChipRun.Say(RomBankPacker.Pack([Syllable(FrameKind.Voiced, 3, 3)])[0], 0);
+        int start = run.Outputs.Count - (3 * ClocksPerFrame) - 2;
+
+        int[] first = [.. run.Outputs.Skip(start).Take(ClocksPerFrame)];
+        int[] second = [.. run.Outputs.Skip(start + ClocksPerFrame).Take(ClocksPerFrame)];
+
+        Assert.Equal(first, second);
+        Assert.Contains(first, output => output != ChipConstants.SilentOutput);
+    }
+
     [Fact]
     public void PlaysEverySyllableInTheBank()
     {
@@ -88,17 +113,18 @@ public sealed class RomBankPackerTests
     }
 
     private static EncodedSyllable Unvoiced(int frames, byte fill) =>
-        new(FrameKind.Unvoiced, frames, [.. Enumerable.Repeat(fill, frames * EncoderConstants.UnvoicedBytesPerFrame)]);
+        new(FrameKind.Unvoiced, frames, 1, [.. Enumerable.Repeat(fill, frames * EncoderConstants.UnvoicedBytesPerFrame)]);
 
-    private static EncodedSyllable Syllable(FrameKind kind, int frames)
+    private static EncodedSyllable Syllable(FrameKind kind, int frames, int periodsPerPulse = 1)
     {
-        int bytesPerFrame = kind switch
+        int bytes = kind switch
         {
-            FrameKind.Voiced => EncoderConstants.VoicedBytesPerFrame,
-            FrameKind.Unvoiced => EncoderConstants.UnvoicedBytesPerFrame,
+            FrameKind.Voiced => frames / periodsPerPulse * EncoderConstants.BytesPerPulse,
+            FrameKind.Unvoiced => frames * EncoderConstants.UnvoicedBytesPerFrame,
             _ => 0,
         };
 
-        return new EncodedSyllable(kind, frames, [.. Enumerable.Repeat((byte)0xFF, frames * bytesPerFrame)]);
+        // Rising deltas, so the pulse is audible and a repeat is easy to see.
+        return new EncodedSyllable(kind, frames, periodsPerPulse, [.. Enumerable.Repeat((byte)0xFF, bytes)]);
     }
 }

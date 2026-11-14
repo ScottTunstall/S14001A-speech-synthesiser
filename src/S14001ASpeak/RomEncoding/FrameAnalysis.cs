@@ -5,6 +5,7 @@ namespace S14001ASpeak.RomEncoding;
 /// </summary>
 /// <param name="Kind">How the frame is stored.</param>
 /// <param name="SegmentStart">
-/// The first sample to encode: the frame's start, or for a voiced frame the start of the pitch pulse it keeps.
+/// For an unvoiced or silent frame, the frame's first sample. For a voiced frame, the peak of the pitch pulse:
+/// the ringing that follows it is what the chip will repeat.
 /// </param>
 internal readonly record struct FrameAnalysis(FrameKind Kind, int SegmentStart);

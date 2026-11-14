@@ -50,6 +50,17 @@ public sealed class SpeechEncoderTests
     }
 
     [Fact]
+    public void EncodesSpeechTheSameWhicheverWayUpItWasRecorded()
+    {
+        double[] voice = TestSignals.PulseTrain(120, 0.5, SourceRateHz / 2, SourceRateHz);
+
+        IReadOnlyList<SpeechRom> upright = SpeechEncoder.Encode(Clip(voice));
+        IReadOnlyList<SpeechRom> inverted = SpeechEncoder.Encode(Clip(voice.Select(sample => -sample)));
+
+        Assert.Equal(Bytes(Assert.Single(upright)), Bytes(Assert.Single(inverted)));
+    }
+
+    [Fact]
     public void SplitsLongSpeechAcrossBanks()
     {
         // Noise is stored in full, 32 bytes a frame, so a few seconds of it overflow one 4 KB bank.
@@ -59,4 +70,6 @@ public sealed class SpeechEncoderTests
     }
 
     private static AudioClip Clip(IEnumerable<double> samples) => new(SourceRateHz, TestSignals.ToFloats(samples));
+
+    private static int[] Bytes(SpeechRom rom) => [.. Enumerable.Range(0, ChipConstants.RomSize).Select(rom.ReadByte)];
 }

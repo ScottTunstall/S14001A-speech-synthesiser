@@ -82,7 +82,7 @@ internal static class RomBankPacker
 
             // A silent syllable reads no data that matters, so it points at the start of the bank.
             image[entry] = (byte)(syllable.Data.Count == 0 ? 0 : dataAddress >> EncoderConstants.DataAddressShift);
-            image[entry + 1] = SyllableControl.For(syllable.Kind, syllable.FrameCount, isLast: index == syllables.Count - 1);
+            image[entry + 1] = SyllableControl.For(syllable, isLast: index == syllables.Count - 1);
 
             for (int offset = 0; offset < syllable.Data.Count; offset++)
             {

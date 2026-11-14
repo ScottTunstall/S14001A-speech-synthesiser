@@ -55,7 +55,10 @@ internal static class SpeechEncoder
             return [.. samples.Select(_ => 0.0)];
         }
 
-        double scale = EncoderConstants.TargetPeakLevel / reference;
+        // Turn the speech so its pitch pulses point upwards, as TSI's do; the sign of the third moment (the
+        // skew) shows which way they point. Every stored pulse is then the same way up.
+        double skew = samples.Sum(sample => sample * sample * sample);
+        double scale = EncoderConstants.TargetPeakLevel / reference * (skew < 0 ? -1 : 1);
 
         return [.. samples.Select(sample => Math.Max(
             EncoderConstants.MaximumLevelBelowRest,

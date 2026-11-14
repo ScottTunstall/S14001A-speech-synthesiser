@@ -43,17 +43,29 @@ internal static class EncoderConstants
     /// <summary>A quarter's deltas fill 8 ROM bytes.</summary>
     public const int BytesPerQuarter = DeltasPerQuarter / DeltasPerByte;
 
-    /// <summary>A voiced frame stores one quarter: played forwards, then mirrored, then silent for two quarters.</summary>
-    public const int VoicedBytesPerFrame = BytesPerQuarter;
+    /// <summary>
+    /// A voiced pitch pulse stores one quarter: played forwards, then mirrored, then silent for two quarters.
+    /// </summary>
+    public const int BytesPerPulse = BytesPerQuarter;
 
     /// <summary>An unvoiced frame stores all four quarters, as unvoiced speech advances 8 bytes every quarter.</summary>
     public const int UnvoicedBytesPerFrame = BytesPerQuarter * QuartersPerFrame;
 
     /// <summary>
-    /// The most frames in a voiced syllable: with repeat 3 each length step plays one pitch period, and the
-    /// 3-bit length field allows 1 to 8 steps.
+    /// The most stored pulses in a voiced syllable: the 3-bit length field counts 1 to 8 of them, each played
+    /// for 1 to 4 pitch periods.
     /// </summary>
-    public const int MaximumVoicedFrames = 8;
+    public const int MaximumVoicedPulses = 8;
+
+    /// <summary>
+    /// How many pitch periods each stored voiced pulse plays for. TSI's Berzerk vocabulary mostly uses repeat 1,
+    /// which plays each stored pulse 3 times; that keeps the buzz steady, where a new pulse every period sounds
+    /// rough and noisy. The stored pulse is the average of the periods it stands for.
+    /// </summary>
+    public const int PeriodsPerPulse = 3;
+
+    /// <summary>The 2-bit repeat counter allows 1 to 4 periods per pulse: the repeat field is 4 minus that.</summary>
+    public const int MaximumPeriodsPerPulse = 4;
 
     /// <summary>
     /// The most frames in an unvoiced or silent syllable: the 5-bit length and repeat field counts 4 to 128
@@ -61,11 +73,8 @@ internal static class EncoderConstants
     /// </summary>
     public const int MaximumUnvoicedFrames = 32;
 
-    /// <summary>The voiced syllable's repeat field: 3 plays each stored pitch period once.</summary>
-    public const int VoicedRepeat = 3;
-
-    /// <summary>The length field's steps that a syllable of one frame leaves unplayed, plus one.</summary>
-    public const int VoicedLengthSteps = 8;
+    /// <summary>The 3-bit length field counts up to 7: a voiced syllable of n pulses has the length field 8 - n.</summary>
+    public const int LengthSteps = 8;
 
     /// <summary>The bits of the repeat field in a control byte.</summary>
     public const int RepeatBits = 2;
@@ -91,8 +100,11 @@ internal static class EncoderConstants
     /// <summary>Mask of the syllable list address's 4 LSBs, stored in bits 7-4 of the word table's second byte.</summary>
     public const int ListAddressLowMask = 0x0f;
 
-    /// <summary>The level above rest that the loudest of the speech is scaled to (rest is 7, full scale 15).</summary>
-    public const double TargetPeakLevel = 7.5;
+    /// <summary>
+    /// The level above rest that the loudest of the speech is scaled to (rest is 7, full scale 15). TSI's Berzerk
+    /// pulses peak around 5 to 6 levels, leaving headroom; scaling closer to full scale makes the chip clip.
+    /// </summary>
+    public const double TargetPeakLevel = 5.5;
 
     /// <summary>The highest level above rest the chip can output.</summary>
     public const double MaximumLevelAboveRest = 8;

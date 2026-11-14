@@ -6,7 +6,7 @@ namespace S14001ASpeak.RomEncoding;
 
 /// <summary>
 /// Splits speech into frames of one chip pitch period and decides how each is stored: silent, voiced or
-/// unvoiced. For voiced frames it also finds the pitch pulse the chip will repeat.
+/// unvoiced. For voiced frames it also finds the peak of the pitch pulse the chip will repeat.
 /// </summary>
 internal static class FrameAnalyzer
 {
@@ -52,7 +52,7 @@ internal static class FrameAnalyzer
         (double correlation, int lag) = StrongestPeriod(levels, start);
 
         return correlation >= EncoderConstants.VoicingThreshold
-            ? new FrameAnalysis(FrameKind.Voiced, PulseStart(levels, start, lag))
+            ? new FrameAnalysis(FrameKind.Voiced, PulsePeak(levels, start, lag))
             : new FrameAnalysis(FrameKind.Unvoiced, start);
     }
 
@@ -118,30 +118,21 @@ internal static class FrameAnalyzer
         return (best, bestLag);
     }
 
-    private static int PulseStart(IReadOnlyList<double> levels, int start, int lag)
+    private static int PulsePeak(IReadOnlyList<double> levels, int start, int lag)
     {
-        // The loudest sample of the first pitch period marks the pitch pulse. The chip starts each pitch period
-        // at rest, so the kept segment starts at the zero crossing before that peak.
+        // The highest sample of the first pitch period marks the pitch pulse. The encoder has already turned the
+        // speech so its pulses point upwards, so taking the positive peak keeps every stored pulse the same way up.
         int end = Math.Min(start + Math.Min(lag, EncoderConstants.DeltasPerFrame), levels.Count);
         int peak = start;
 
         for (int index = start; index < end; index++)
         {
-            if (Math.Abs(levels[index]) > Math.Abs(levels[peak]))
+            if (levels[index] > levels[peak])
             {
                 peak = index;
             }
         }
 
-        bool isPositive = levels[peak] >= 0;
-        int earliest = Math.Max(0, peak - EncoderConstants.DeltasPerQuarter);
-        int pulseStart = peak;
-
-        while (pulseStart > earliest && (levels[pulseStart - 1] >= 0) == isPositive && levels[pulseStart - 1] != 0)
-        {
-            pulseStart--;
-        }
-
-        return pulseStart;
+        return peak;
     }
 }

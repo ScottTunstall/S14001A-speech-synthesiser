@@ -120,10 +120,11 @@ by recording a person and compressing the recording into the chip's format.
 This app does the same, live, for any text:
 
 1. A Windows speech voice says the text into a recording.
-2. An encoder turns the recording into S14001A ROM data, as TSI did: voiced sounds become one pitch pulse
-   per chip pitch period (the chip plays it forwards, mirrored, then silent), unvoiced sounds such as *s*
-   and *f* are stored in full, and pauses become silent syllables. The 2-bit deltas are chosen by a search
-   that runs the emulator's own decoder.
+2. An encoder turns the recording into S14001A ROM data, as TSI did. Voiced sounds are stored as one pitch
+   pulse for every 3 chip pitch periods, time-reversed so that the chip's forwards-then-mirrored playback
+   rises to the peak and then decays naturally, matching the data in the Berzerk ROM. Unvoiced sounds such
+   as *s* and *f* are stored in full, and pauses become silent syllables. The 2-bit deltas are chosen by a
+   search that runs the emulator's own decoder.
 3. The emulated chip plays the ROM data, switching 4 KB ROM banks for longer speech.
 
 So you hear what a real S14001A would make of that recording, including its buzzing, fixed pitch of about
