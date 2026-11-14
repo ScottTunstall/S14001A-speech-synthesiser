@@ -5,7 +5,7 @@
     <TargetFrameworks>net48;net10.0</TargetFrameworks>
     <RootNamespace>S14001ASpeak</RootNamespace>
     <AssemblyName>S14001ASpeak</AssemblyName>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <Description>Speaks any text through an emulation of the TSI S14001A speech chip, ported from MAME.</Description>
     <!-- InvariantGlobalization stays off: System.Speech on .NET matches voices by culture and fails without culture data. -->
     <!-- The XML documentation file exists for the analyzers; installed copies have no use for it. -->

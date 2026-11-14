@@ -21,8 +21,9 @@ command with `powershell -ExecutionPolicy Bypass -File installer\build.ps1`.
 The programs land in `src\S14001ASpeak\bin\Debug\net48\` and `src\S14001ASpeak\bin\Debug\net10.0\`. Both
 produce byte-identical speech files.
 
-All compiler, .NET analyzer (`AnalysisLevel` `latest-all`), IDE code-style and
-[Roslynator](https://github.com/dotnet/roslynator) diagnostics are build errors. The house rules
+All compiler, .NET analyzer (`AnalysisLevel` `latest-all`), IDE code-style,
+[Roslynator](https://github.com/dotnet/roslynator) and
+[Microsoft threading](https://github.com/microsoft/vs-threading) diagnostics are build errors. The house rules
 (Clean Code and SOLID, command/query separation, one type per file, enums and constants in their own
 files, principle of least surprise) are recorded at the top of [`.editorconfig`](../.editorconfig).
 
