@@ -16,6 +16,7 @@ Jonathan Gevaryahu and hap. It builds for both **.NET Framework 4.8** and **.NET
 
 ## Contents
 
+- [Quick setup](#quick-setup)
 - [Usage](#usage)
 - [How it can say anything](#how-it-can-say-anything)
 - [Speed and pitch](#speed-and-pitch)
@@ -24,6 +25,34 @@ Jonathan Gevaryahu and hap. It builds for both **.NET Framework 4.8** and **.NET
 - [Licensing](#licensing)
 
 ---
+
+## Quick setup
+
+You don't need any programming tools, and unlike the Votrax emulator you don't need a ROM file.
+
+1. **Download the installer.** Go to the
+   [latest release](https://github.com/ScottTunstall/S14001A-speech-synthesiser/releases/latest) and click
+   **`S14001ASpeakSetup-net10.exe`**. If you are not sure which one to pick, pick this one.
+
+   *(Only if you have a very old or 32-bit Windows: use `S14001ASpeakSetup-net48.exe` instead.)*
+
+2. **Run the installer.** Double-click the file you downloaded.
+   - If Windows says **"Windows protected your PC"**, click **More info**, then **Run anyway**. This
+     happens with any new program that isn't from a big company.
+   - Leave **Add S14001ASpeak to the PATH** ticked. Then click through to the end.
+
+3. **Make it talk.** Press the Windows key, type `cmd`, and press Enter. In the black window, type this
+   and press Enter:
+
+   ```console
+   S14001ASpeak "Hello, world!"
+   ```
+
+   You should hear the speech. Change the words between the quotes to say anything you like.
+
+To save the speech as a sound file instead, type `S14001ASpeak -f hello.wav "Hello, world!"` (or `hello.ogg`
+for Ogg Vorbis). See [Usage](#usage) for more. To remove the program, uninstall *S14001ASpeak* in Windows
+Settings > Apps.
 
 ## Usage
 

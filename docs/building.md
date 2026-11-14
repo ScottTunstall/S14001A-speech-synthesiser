@@ -2,13 +2,21 @@
 
 [Back to the README](../README.md)
 
+Only needed if you want to change the code; everyone else should use the
+[installers](../README.md#quick-setup).
+
 Needs the .NET 10 SDK and Windows (the .NET Framework 4.8 target, the speech voices and audio playback are
-all Windows-only).
+all Windows-only). Building the installers needs [Inno Setup 6](https://jrsoftware.org/isinfo.php); see
+[`installer/README.md`](../installer/README.md).
 
 ```console
 dotnet build              :: both target frameworks
 dotnet test               :: 156 tests on each framework
+installer\build.ps1       :: S14001ASpeakSetup-net48.exe and S14001ASpeakSetup-net10.exe
 ```
+
+If PowerShell refuses to run `build.ps1` because script execution is disabled, run it for that one
+command with `powershell -ExecutionPolicy Bypass -File installer\build.ps1`.
 
 The programs land in `src\S14001ASpeak\bin\Debug\net48\` and `src\S14001ASpeak\bin\Debug\net10.0\`. Both
 produce byte-identical speech files.

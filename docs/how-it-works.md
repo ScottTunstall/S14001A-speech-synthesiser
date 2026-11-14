@@ -21,6 +21,7 @@ text ─► WindowsSpeechSource ─► SpeechEncoder ─────────
 | `src/S14001ASpeak/Audio`       | Audio clips, WAV and Ogg Vorbis encoding, speaker and file outputs. |
 | `src/S14001ASpeak/Cli`         | Command-line parsing and help. |
 | `tests/S14001ASpeak.Tests`     | xUnit tests. |
+| `installer`                    | Inno Setup installers for both frameworks. |
 
 ## The chip
 
